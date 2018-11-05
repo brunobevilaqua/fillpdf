@@ -27,6 +27,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 )
 
 // Form represents the PDF form.
@@ -117,6 +118,8 @@ func createFdfFile(form Form, path string) error {
 			} else {
 				valStr = "Off"
 			}
+		case float64:
+			valStr = strconv.FormatFloat(v, 'f', -1, 64)
 		default:
 			valStr = fmt.Sprintf("%v", value)
 		}
