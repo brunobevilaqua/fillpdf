@@ -82,7 +82,6 @@ func Fill(form Form, formPDFFile string) (result io.Reader, err error) {
 		formPDFFile,
 		"fill_form", fdfFile,
 		"output", "-",
-		"flatten",
 	}
 
 	// Run the pdftk utility.
