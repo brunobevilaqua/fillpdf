@@ -19,12 +19,7 @@
 package fillpdf
 
 import (
-	"bytes"
-	"fmt"
-	"io"
 	"os"
-	"os/exec"
-	"strings"
 )
 
 // exists returns whether the given file or directory exists or not
@@ -37,24 +32,4 @@ func exists(path string) (bool, error) {
 		return false, nil
 	}
 	return false, err
-}
-
-// runCommandInPath runs a command and waits for it to exit.
-// The working directory is also set.
-// The stderr error message is returned on error.
-func runCommandInPath(dir, name string, args ...string) (io.Reader, error) {
-	// Create the command.
-	var stderr bytes.Buffer
-	var stdout bytes.Buffer
-	cmd := exec.Command(name, args...)
-	cmd.Stderr = &stderr
-	cmd.Stdout = &stdout
-	cmd.Dir = dir
-
-	// Start the command and wait for it to exit.
-	err := cmd.Run()
-	if err != nil {
-		return nil, fmt.Errorf(strings.TrimSpace(stderr.String()))
-	}
-	return &stdout, nil
 }
