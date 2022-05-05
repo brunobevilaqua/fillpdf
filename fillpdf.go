@@ -32,7 +32,7 @@ import (
 // This is a key value map.
 type Form map[string]interface{}
 
-// FillFile fills a PDF form with the specified form values and creates a final filled PDF file.
+// FillFromReader fills a PDF form with the specified form values and creates a final filled PDF file.
 func FillFromReader(form Form, pdfFile io.Reader) (result io.Reader, err error) {
 	// Check if the pdftk utility exists.
 	_, err = exec.LookPath("pdftk")
