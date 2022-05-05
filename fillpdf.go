@@ -22,6 +22,8 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"io/fs"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
@@ -31,7 +33,39 @@ import (
 // This is a key value map.
 type Form map[string]interface{}
 
-// Fill a PDF form with the specified form values and create a final filled PDF file.
+// FillFile fills a PDF form with the specified form values and creates a final filled PDF file.
+func FillFile(form Form, file fs.File) (result io.Reader, err error) {
+	// Check if the pdftk utility exists.
+	_, err = exec.LookPath("pdftk")
+	if err != nil {
+		return nil, fmt.Errorf("pdftk utility is not installed!")
+	}
+	fdfFile := createFdfFile(form)
+	f, err := os.CreateTemp("", "fdf")
+	if err != nil {
+		return nil, err
+	}
+	defer os.Remove(f.Name())
+	_, err = f.Write(fdfFile)
+	if err != nil {
+		return nil, err
+	}
+	args := []string{
+		"-",
+		"fill_form", f.Name(),
+		"output", "-",
+	}
+	cmd := exec.Command("pdftk", args...)
+	cmd.Stdin = file
+	out, err := cmd.Output()
+	if err != nil {
+		return nil, fmt.Errorf("pdftk error: %v\nOutput: %s", err, string(out))
+	}
+
+	return bytes.NewReader(out), nil
+}
+
+// Fill fills a PDF form with the specified form values and creates a final filled PDF file.
 func Fill(form Form, formPDFFile string) (result io.Reader, err error) {
 	// Get the absolute paths.
 	formPDFFile, err = filepath.Abs(formPDFFile)
@@ -44,7 +78,7 @@ func Fill(form Form, formPDFFile string) (result io.Reader, err error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to check if form PDF file exists: %v", err)
 	} else if !e {
-		return nil, fmt.Errorf("form PDF file does not exists: '%s'", formPDFFile)
+		return nil, fmt.Errorf("form PDF file does not exist: '%s'", formPDFFile)
 	}
 
 	// Check if the pdftk utility exists.
@@ -101,18 +135,30 @@ func createFdfFile(form Form) []byte {
 	return w.Bytes()
 }
 
+// exists returns whether the given file or directory exists or not
+func exists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return false, err
+}
+
 const fdfHeader = `%FDF-1.2
-%,,oe"
-1 0 obj
-<<
-/FDF << /Fields [`
+ %,,oe"
+ 1 0 obj
+ <<
+ /FDF << /Fields [`
 
 const fdfFooter = `]
->>
->>
-endobj
-trailer
-<<
-/Root 1 0 R
->>
-%%EOF`
+ >>
+ >>
+ endobj
+ trailer
+ <<
+ /Root 1 0 R
+ >>
+ %%EOF`
