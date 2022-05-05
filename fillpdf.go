@@ -55,7 +55,7 @@ func FillFromReader(form Form, pdfFile io.Reader) (result io.Reader, err error) 
 		"output", "-",
 	}
 	cmd := exec.Command("pdftk", args...)
-	cmd.Stdin = file
+	cmd.Stdin = pdfFile
 	out, err := cmd.Output()
 	if err != nil {
 		return nil, fmt.Errorf("pdftk error: %v\nOutput: %s", err, string(out))
