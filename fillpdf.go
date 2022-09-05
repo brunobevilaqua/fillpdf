@@ -20,12 +20,14 @@ package fillpdf
 
 import (
 	"bytes"
+	"encoding/binary"
 	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
+	"unicode/utf16"
 )
 
 // Form represents the PDF form.
@@ -125,7 +127,7 @@ func createFdfFile(form Form) []byte {
 		default:
 			valStr = fmt.Sprintf("%v", value)
 		}
-		fmt.Fprintf(w, "<< /T (%s) /V (%s)>>\n", key, valStr)
+		fmt.Fprintf(w, "<< /T (%s) /V (%s)>>\n", key, encodeUTF16(valStr, true))
 	}
 
 	// Write the fdf footer.
@@ -144,6 +146,22 @@ func exists(path string) (bool, error) {
 		return false, nil
 	}
 	return false, err
+}
+
+func encodeUTF16(s string, addBom bool) []byte {
+	r := []rune(s)
+	iresult := utf16.Encode(r)
+	var bytes []byte
+	if addBom {
+		bytes = make([]byte, 2)
+		bytes = []byte{254, 255}
+	}
+	for _, i := range iresult {
+		temp := make([]byte, 2)
+		binary.BigEndian.PutUint16(temp, i)
+		bytes = append(bytes, temp...)
+	}
+	return bytes
 }
 
 const fdfHeader = `%FDF-1.2
