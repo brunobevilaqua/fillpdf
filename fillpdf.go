@@ -148,6 +148,8 @@ func exists(path string) (bool, error) {
 	return false, err
 }
 
+// Taken from https://gist.github.com/ik5/65de721ca495fa1bf451
+// EncodeUTF16 get a utf8 string and translate it into a slice of bytes of ucs2
 func encodeUTF16(s string, addBom bool) []byte {
 	r := []rune(s)
 	iresult := utf16.Encode(r)
